@@ -9,6 +9,8 @@ import {getCarOptionByCarType} from '../data/CarOption';
 import DropDownPicker from 'react-native-dropdown-picker';
 import IcMoon from '@assets/images/calculator/moon-icon.svg';
 import IcSun from '@assets/images/calculator/sun-icon.svg';
+import CheckTrue from '@assets/images/calculator/ic-checked.svg';
+import CheckFalse from '@assets/images/calculator/ic-unChecked.svg';
 
 type Option = {
   label: string;
@@ -21,6 +23,14 @@ export default function Form() {
   const [carOptions, setCarOptions] = useState<Option[]>([]);
   const [selectedCarOption, setSelectedCarOption] = useState<string>('NONE');
   const [selectedTime, setSelectedTime] = useState<'day' | 'night'>('day');
+  const [selectedTransportOption, setSelectedTransportOption] = useState<'DRIVE' | 'LOADING' | 'CARRY' | 'WITH_WORKER'>('DRIVE');
+  const [deliveryOptionStyle, setDeliveryOptionStyle] = useState({
+    delivery: false,
+    loading: false,
+    carry: false,
+    width_worker: false,
+  });
+  
 
   useEffect(() => {
     const options = getCarOptionByCarType({carType: selectedCarType});
@@ -29,8 +39,45 @@ export default function Form() {
     }
   }, [selectedCarType]);
 
+  useEffect(() => {
+    switch (selectedTransportOption) {
+      case 'DRIVE':
+        setDeliveryOptionStyle({
+          delivery: true,
+          loading: false,
+          carry: false,
+          width_worker: false,
+        });
+        break;
+      case 'LOADING':
+        setDeliveryOptionStyle({
+          delivery: true,
+          loading: true,
+          carry: false,
+          width_worker: false,
+        });
+        break;
+      case 'CARRY':
+        setDeliveryOptionStyle({
+          delivery: true,
+          loading: true,
+          carry: true,
+          width_worker: false,
+        });
+        break;
+      case 'WITH_WORKER':
+        setDeliveryOptionStyle({
+          delivery: true,
+          loading: true,
+          carry: true,
+          width_worker: true,
+        });
+        break;
+    }
+  }, [selectedTransportOption]);
+
   return (
-    <View className="py-120 px-24 bg-white">
+    <View className="pt-120 pb-24 px-24 bg-white">
       <Text className="text-28 font-bold text-center mb-48 text-[#212121]">
         용달 비용 계산하기
       </Text>
@@ -95,6 +142,38 @@ export default function Form() {
           selectedTime={selectedTime}
           setSelectedTime={setSelectedTime}
         />
+      </View>
+
+      <View className="mb-16">
+        <TextTitle>운송 옵션을 선택해주세요</TextTitle>
+        <View className="flex-row gap-8 mb-8">
+        <VehicleButton
+            label="본인이 직접 옮김"
+            onPress={() => setSelectedTransportOption('DRIVE')}
+            isSelected={selectedTransportOption === 'DRIVE'}
+          />
+          <VehicleButton
+            label="상하차만 도움"
+            onPress={() => setSelectedTransportOption('LOADING')}
+            isSelected={selectedTransportOption === 'LOADING'}
+          />
+        </View>
+        <View className="flex-row gap-8 mb-8">
+          <VehicleButton
+            label="상하차 및 운반 도움"
+            onPress={() => setSelectedTransportOption('CARRY')}
+            isSelected={selectedTransportOption === 'CARRY'}
+          />
+          <VehicleButton
+            label="운반 도움 + 인부1명"
+            onPress={() => setSelectedTransportOption('WITH_WORKER')}
+            isSelected={selectedTransportOption === 'WITH_WORKER'}
+          />
+        </View>
+      </View>
+
+      <View>
+        <DeliveryOptionDescriptions deliveryOptionStyle={deliveryOptionStyle} />
       </View>
     </View>
   );
@@ -299,6 +378,53 @@ const SelectTimeContainer = ({
           </Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
+};
+
+
+const DeliveryOptionDescriptions = ({
+  deliveryOptionStyle,
+}: {
+  deliveryOptionStyle: Record<'delivery' | 'loading' | 'carry' | 'width_worker', boolean>;
+}) => {
+  const items = [
+    {
+      key: 'delivery',
+      text: '기사님이 차량 운전만 해줘요.',
+    },
+    {
+      key: 'loading',
+      text: '기사님이 짐을 차량에 싣고 내리는 것을 도와줘요.',
+    },
+    {
+      key: 'carry',
+      text: '기사님이 출·도착지에서 차량까지 짐을 옮기는 것을 도와줘요.',
+    },
+    {
+      key: 'width_worker',
+      text: '인부 1명이 기사님과 함께 짐 운반을 도와줘요.',
+    },
+  ];
+
+  return (
+    <View className="flex flex-col gap-4">
+      {items.map(({ key, text }) => {
+        const isActive = deliveryOptionStyle[key as keyof typeof deliveryOptionStyle];
+        const Icon = isActive ? CheckTrue : CheckFalse;
+        return (
+          <View key={key} className="flex-row items-start gap-8">
+            <Icon width={24} height={24} />
+            <Text
+              className={`text-14 ${
+                isActive ? 'text-sendyBlue font-semibold' : 'text-[#b7b7b7]'
+              }`}
+            >
+              {text}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 };
